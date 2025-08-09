@@ -1,4 +1,6 @@
-# Flow Album 是一个基于 Cloudflare 技术栈构建的私人云相册应用，提供安全的照片和视频存储、管理和浏览功能。用户可以通过用户名密码保护访问自己的媒体文件，支持上传、下载、删除和批量操作。
+# Flow Album -- 一个基于 Cloudflare 技术栈构建的私人云相册应用。
+
+## Flow Album 提供安全的照片和视频存储、管理和浏览功能。用户可以通过用户名密码保护访问自己的媒体文件，支持上传、下载、删除和批量操作。
 
 ![Security Shield](https://img.icons8.com/color/96/000000/security-checked.png) 
 ![Cloudflare](https://img.icons8.com/color/96/000000/cloudflare.png)
