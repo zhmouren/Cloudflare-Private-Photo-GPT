@@ -206,7 +206,7 @@ wrangler deploy --env production
 3. 配置WAF防护规则
 4. 实施分级存储策略
 
-## 部署方案
+## 手动部署方案
 
 Flow Album 支持两种主要部署方案：Cloudflare Pages 和 Cloudflare Workers。推荐使用 Cloudflare Pages，因为它提供了更简单的配置和自动集成前后端功能。
 ### 方案一：Cloudflare Pages（推荐）
@@ -234,8 +234,8 @@ Flow Album 支持两种主要部署方案：Cloudflare Pages 和 Cloudflare Work
 
 ```bash
 ---必选步骤-核心环节变量---：
-USERNAME="username" # 登录用户名
-PASSWORD="password" # 登录密码
+USERNAME="username" # 登录用户名，例如 "admin"
+PASSWORD="password" # 登录密码，建议使用复杂密码，如 "DFd@jTS2wJ3O"
 JWT_SECRET="JWfoJTp2b8ADB4SeIUtGmyhzj6HaUUIiXk98mU5F" # 32位以上随机字符串
 MAX_STORAGE_BYTES="6442450944" #最大存储空间（字节），例如 6442450944 表示6GB
 MAX_FILE_SIZE_BYTES="52428800" # 单个文件最大大小（字节），例如 52428800 表示50MB
@@ -254,11 +254,11 @@ IMAGE_OPTIM_QUALITY="85" # 图片优化质量, 建议设置为85
 ```bash
 ---必选步骤---：
 变量名称="R2"  # 必须是R2，否则无法绑定存储桶
-R2 存储桶名称="private-photo" # 选择你刚刚创建的存储桶或你想要绑定的存量存储桶名称，不需要同名
+R2 存储桶名称="private-photo" # 选择你刚刚创建的存储桶或你想要绑定的存量存储桶名称，不需要同名，例如private-photo
 
 ---可选步骤---：
 变量名称="RATE_LIMIT_KV"  # 速率限制KV命名空间
-KV 命名空间="private-photo" # 选择你刚刚创建的KV命名空间或你想要绑定的存量KV命名空间名称，不需要同名
+KV 命名空间="private-photo" # 选择你刚刚创建的KV命名空间或你想要绑定的存量KV命名空间名称，不需要同名，例如private-photo
 ```
 
 5. **如需本地本地开发**
@@ -454,32 +454,3 @@ npm run build
 Flow Album 是一个功能完整、性能优化、安全可靠的私人云相册解决方案。通过利用 Cloudflare Pages 和 R2 对象存储服务，提供了快速、稳定的媒体文件访问体验。项目采用现代化的技术栈，具有良好的可维护性和扩展性，适合个人或小团队部署使用。
 
 推荐使用 Cloudflare Pages 方案，因为它配置简单、自动集成前后端，并且充分利用了 Cloudflare 的全球 CDN 网络。如果你需要更复杂的逻辑处理，也可以考虑 Workers 方案。
-```
-
-## 总结
-
-您的项目现在已经具备了完善的增强安全功能：
-
-1. **认证增强**：
-   - 用户名/密码认证
-   - 访客模式（只读访问）
-   - 登录API专门处理认证
-
-2. **输入验证**：
-   - 文件类型限制
-   - 文件大小限制
-   - 总存储空间限制
-   - 文件名清理（防止路径遍历）
-
-3. **请求限制**：
-   - 速率限制防止暴力破解和DDoS攻击
-   - 可选的KV存储支持持久化速率限制
-
-4. **错误处理**：
-   - 适当的HTTP状态码
-   - 用户友好的错误消息
-
-5. **前端增强**：
-   - 访客模式UI
-   - 适当的权限控制
-   - 错误状态处理
