@@ -11,12 +11,22 @@ export async function checkRateLimit(
   maxRequests: number,
   windowMs: number
 ): Promise<{ allowed: boolean; resetTime?: number; remaining?: number }> {
-  // 在 Pages 玎境中，如果没有配置 KV，降级到内存存储
-  // 更准确地检查 KV 是否有效
-  if (!kv || typeof kv.get !== 'function') {
-    return checkRateLimitMemory(identifier, maxRequests, windowMs);
+  // 在 Pages 玎境中，优先使用绑定的 KV
+  if (kv && typeof kv.get === 'function') {
+    return checkRateLimitKV(kv, identifier, maxRequests, windowMs);
   }
 
+  // 如果没有配置 KV，降级到内存存储
+  return checkRateLimitMemory(identifier, maxRequests, windowMs);
+}
+
+// KV存储实现
+async function checkRateLimitKV(
+  kv: KVNamespace,
+  identifier: string,
+  maxRequests: number,
+  windowMs: number
+): Promise<{ allowed: boolean; resetTime?: number; remaining?: number }> {
   const key = `rate_limit:${identifier}`;
   const now = Date.now();
   
