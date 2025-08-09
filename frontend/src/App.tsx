@@ -308,17 +308,22 @@ const App: React.FC = () => {
   const totalPages = Math.ceil(filteredMedia.length / itemsPerPage);
 
   // API 调用
-  const loadMedia = async (pwd?: string, usrname?: string) => {
-    const headers: Record<string, string> = {};
+  const loadMedia = async () => {
+    const token = localStorage.getItem('token');
+    const expiresAt = localStorage.getItem('expiresAt');
     
-    // 如果提供了用户名和密码，则添加到请求头
-    if (pwd && usrname) {
-      headers['x-password'] = pwd;
-      headers['x-username'] = usrname;
+    if (!token || !expiresAt || Number(expiresAt) < Date.now()) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('expiresAt');
+      setIsLoggedIn(false);
+      setIsGuest(false);
+      return false;
     }
     
     const res = await fetch('/api/list', {
-      headers
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
     });
     
     if (res.status === 401) {
@@ -383,7 +388,9 @@ const App: React.FC = () => {
       if (response.ok) {
         const data = await response.json();
         if (data.success) {
-          const success = await loadMedia(password, username);
+          localStorage.setItem('token', data.token);
+          localStorage.setItem('expiresAt', String(Date.now() + data.expiresIn * 1000));
+          const success = await loadMedia();
           if (success) {
             setIsLoggedIn(true);
             setIsGuest(false);
@@ -408,11 +415,17 @@ const App: React.FC = () => {
       setIsLoggedIn(false);
     }
   };
-
   const handleUpload = async () => {
-    // 访客模式下不能上传
+    // 访客观模式下不能上传
     if (isGuest) {
-      alert('访客模式下无法上传文件，请登录后操作');
+      alert('访客观模式下无法上传文件，请登录后操作');
+      return;
+    }
+    
+    const token = localStorage.getItem('token');
+    if (!token) {
+      alert('登录已过期，请重新登录');
+      setIsLoggedIn(false);
       return;
     }
     
@@ -427,8 +440,7 @@ const App: React.FC = () => {
         method: 'POST',
         body: form,
         headers: { 
-          'x-password': password,
-          'x-username': username
+          'Authorization': `Bearer ${token}`
         }
       });
       

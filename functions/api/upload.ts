@@ -30,12 +30,13 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     return new Response('请求过于频繁，请稍后再试', { status: 429 });
   }
   
-  const pwd = context.request.headers.get('x-password') || new URL(context.request.url).searchParams.get('password')
-  const username = context.request.headers.get('x-username') || new URL(context.request.url).searchParams.get('username')
+  // 验证JWT令牌
+  const token = getTokenFromRequest(context.request);
+  if (!token) return new Response('未授权', { status: 401 });
   
-  // 验证用户名和密码（上传操作必须认证）
-  if (!pwd || !username || pwd !== context.env.PASSWORD || username !== context.env.USERNAME) {
-    return new Response('未授权', { status: 401 })
+  const payload = await verifyJWT(token, context.env.JWT_SECRET);
+  if (!payload || !payload.username || payload.username !== context.env.USERNAME) {
+    return new Response('未授权', { status: 401 });
   }
   
   try {
@@ -125,12 +126,13 @@ export const onRequestDelete: PagesFunction<Env> = async (context) => {
     return new Response('请求过于频繁，请稍后再试', { status: 429 });
   }
   
-  const pwd = context.request.headers.get('x-password') || new URL(context.request.url).searchParams.get('password')
-  const username = context.request.headers.get('x-username') || new URL(context.request.url).searchParams.get('username')
+  // 验证JWT令牌
+  const token = getTokenFromRequest(context.request);
+  if (!token) return new Response('未授权', { status: 401 });
   
-  // 验证用户名和密码（删除操作必须认证）
-  if (!pwd || !username || pwd !== context.env.PASSWORD || username !== context.env.USERNAME) {
-    return new Response('未授权', { status: 401 })
+  const payload = await verifyJWT(token, context.env.JWT_SECRET);
+  if (!payload || !payload.username || payload.username !== context.env.USERNAME) {
+    return new Response('未授权', { status: 401 });
   }
   
   try {

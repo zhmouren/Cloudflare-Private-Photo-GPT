@@ -1,4 +1,5 @@
 import { checkRateLimit } from '../lib/security';
+import { createJWT } from '../lib/auth';
 
 export const onRequestPost: PagesFunction<Env> = async (context) => {
   // 速率限制检查（针对登录更严格）
@@ -30,7 +31,17 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       return new Response('用户名或密码错误', { status: 401 });
     }
     
-    return Response.json({ success: true });
+    // 生成JWT令牌
+    const token = await createJWT({
+      username,
+      exp: Math.floor(Date.now() / 1000) + (60 * 60 * 24) // 24小时过期
+    }, context.env.JWT_SECRET);
+    
+    return Response.json({ 
+      success: true,
+      token,
+      expiresIn: 60 * 60 * 24 // 24小时
+    });
   } catch (error) {
     return new Response('请求参数错误', { status: 400 });
   }
