@@ -40,14 +40,28 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
   }
   
   try {
-    const form = await context.request.formData()
-    const file = form.get('file') as File
-    if (!file) return new Response('未选择文件', { status: 400 })
+    // 验证表单数据
+    const form = await context.request.formData().catch(() => null);
+    if (!form) return new Response('无效的表单数据', { status: 400 });
+    
+    const file = form.get('file') as File | null;
+    if (!file || !(file instanceof File)) {
+      return new Response('未选择有效文件', { status: 400 });
+    }
     
     // 检查文件类型
-    const allowedFileTypes = context.env.ALLOWED_FILE_TYPES || 'image/jpeg,image/png,image/gif,image/webp,video/mp4,video/webm,video/ogg';
+    const allowedFileTypes = context.env.ALLOWED_FILE_TYPES?.split(',') || [
+      'image/jpeg',
+      'image/png',
+      'image/gif',
+      'image/webp',
+      'video/mp4',
+      'video/webm',
+      'video/ogg'
+    ];
+    
     if (!isAllowedFileType(file.type, allowedFileTypes)) {
-      return new Response(`不支持的文件类型: ${file.type}`, { status: 400 });
+      return new Response(`不支持的文件类型: ${file.type}，允许的类型: ${allowedFileTypes.join(', ')}`, { status: 400 });
     }
     
     // 检查文件大小限制
