@@ -73,9 +73,6 @@ async function checkRateLimitKV(
       return { allowed: false, resetTime: entry.resetTime, remaining: 0 };
     }
     
-    // 增加计数
-    const newCount = entry.count + 1;
-    await kv.put(key, JSON.stringify({ count: newCount, resetTime: entry.resetTime }), { expirationTtl: Math.ceil((entry.resetTime - now) / 1000) });
     return { allowed: true, resetTime: entry.resetTime, remaining: maxRequests - newCount };
   } catch (error) {
     // KV操作失败时，降级到内存存储

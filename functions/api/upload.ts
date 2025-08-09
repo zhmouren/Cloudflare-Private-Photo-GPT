@@ -87,9 +87,11 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     
     if (key.startsWith('/')) key = key.slice(1)
     
-    // 检查存储空间限制
+    // 检查存储空间限制（支持动态bucket）
+    const bucketName = form.get('bucket') as string || 'default';
+    const targetBucket = context.env[bucketName] || context.env.R2;
     const maxStorage = context.env.MAX_STORAGE_BYTES || 6 * 1024 * 1024 * 1024; // 默认6GB
-    const currentStorage = await getCurrentStorageUsage(context.env.R2, prefix);
+    const currentStorage = await getCurrentStorageUsage(targetBucket, prefix);
     
     if (currentStorage + file.size > maxStorage) {
       return new Response(`存储空间不足 (最大 ${maxStorage / (1024 * 1024 * 1024)} GB)`, { status: 400 });
@@ -113,7 +115,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     }
     
     try {
-      const result = await context.env.R2.put(key, await file.arrayBuffer(), {
+      const result = await targetBucket.put(key, await file.arrayBuffer(), {
         httpMetadata: {
           contentType: file.type,
           contentLength: file.size
@@ -165,6 +167,10 @@ export const onRequestDelete: PagesFunction<Env> = async (context) => {
   try {
     const body = await context.request.json() as { key?: string; keys?: string[] }
     
+    // 获取目标bucket（支持动态）
+    const bucketName = body.bucket as string || 'default';
+    const targetBucket = context.env[bucketName] || context.env.R2;
+    
     // 验证key参数，防止路径遍历攻击
     if (body.key) {
       if (body.key.includes('../') || body.key.includes('..\\') || body.key.startsWith('/')) {
@@ -172,7 +178,7 @@ export const onRequestDelete: PagesFunction<Env> = async (context) => {
       }
       
       // 删除单个文件
-      await context.env.R2.delete(body.key)
+      await targetBucket.delete(body.key)
       return Response.json({ success: true })
     } else if (body.keys && Array.isArray(body.keys)) {
       // 验证所有keys参数
@@ -183,7 +189,7 @@ export const onRequestDelete: PagesFunction<Env> = async (context) => {
       }
       
       // 批量删除文件
-      await context.env.R2.delete(body.keys)
+      await targetBucket.delete(body.keys)
       return Response.json({ success: true })
     } else {
       return new Response('无效的请求参数', { status: 400 })
