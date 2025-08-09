@@ -112,15 +112,28 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       }
     }
     
-    await context.env.R2.put(key, await file.arrayBuffer(), {
-      httpMetadata: {
-        contentType: file.type,
-        contentLength: file.size
-      },
-      customMetadata: metadata
-    })
-    
-    return Response.json({ success: true, key, metadata })
+    try {
+      const result = await context.env.R2.put(key, await file.arrayBuffer(), {
+        httpMetadata: {
+          contentType: file.type,
+          contentLength: file.size
+        },
+        customMetadata: metadata
+      });
+
+      if (!result) throw new Error('R2存储操作失败');
+      
+      return Response.json({ 
+        success: true, 
+        key, 
+        metadata,
+        etag: result.etag,
+        size: result.size
+      });
+    } catch (error) {
+      console.error('R2上传错误:', error);
+      return new Response(`文件存储失败: ${(error as Error).message}`, { status: 500 });
+    }
   } catch (error) {
     return new Response('上传失败: ' + (error as Error).message, { status: 500 })
   }

@@ -29,20 +29,23 @@ export async function createJWT(payload: JWTPayload, secret: string): Promise<st
 
 // 验证JWT令牌
 export async function verifyJWT(token: string, secret: string): Promise<JWTPayload | null> {
-  const [encodedHeader, encodedPayload, signature] = token.split('.');
+  if (!token || typeof token !== 'string') return null;
   
-  if (!encodedHeader || !encodedPayload || !signature) {
-    return null;
-  }
-  
-  // 验证签名
-  const expectedSignature = createHmac('sha256', secret)
-    .update(`${encodedHeader}.${encodedPayload}`)
-    .digest('base64url');
+  try {
+    const [encodedHeader, encodedPayload, signature] = token.split('.');
+    if (!encodedHeader || !encodedPayload || !signature) return null;
     
-  if (signature !== expectedSignature) {
-    return null;
-  }
+    // 验证签名（恒定时间比较防止时序攻击）
+    const expectedSignature = createHmac('sha256', secret)
+      .update(`${encodedHeader}.${encodedPayload}`)
+      .digest('base64url');
+    
+    // 使用定时安全比较
+    let diff = 0;
+    for (let i = 0; i < signature.length; i++) {
+      diff |= signature.charCodeAt(i) ^ expectedSignature.charCodeAt(i);
+    }
+    if (diff !== 0) return null;
   
   try {
     const payload: JWTPayload = JSON.parse(Buffer.from(encodedPayload, 'base64url').toString());

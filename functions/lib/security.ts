@@ -31,22 +31,45 @@ async function checkRateLimitKV(
   const now = Date.now();
   
   try {
-    const entryStr = await kv.get(key);
+    // 原子操作获取当前计数
+    const entryStr = await kv.get(key, { cacheTtl: 0 }); // 禁用缓存获取最新值
     let entry: RateLimitEntry | null = null;
     
     if (entryStr) {
-      entry = JSON.parse(entryStr) as RateLimitEntry;
+      try {
+        entry = JSON.parse(entryStr) as RateLimitEntry;
+      } catch {
+        // 无效数据时重置
+        entry = null;
+      }
     }
     
     if (!entry || entry.resetTime <= now) {
       // 第一次请求或窗口已过期，重置计数器
       const resetTime = now + windowMs;
-      await kv.put(key, JSON.stringify({ count: 1, resetTime }), { expirationTtl: Math.ceil(windowMs / 1000) });
+      await kv.put(key, JSON.stringify({ 
+        count: 1, 
+        resetTime 
+      }), { 
+        expirationTtl: Math.ceil(windowMs / 1000),
+        metadata: { 
+          createdAt: now,
+          maxRequests 
+        }
+      });
       return { allowed: true, resetTime, remaining: maxRequests - 1 };
     }
     
-    if (entry.count >= maxRequests) {
-      // 超过限制
+    // 原子递增计数器
+    const newCount = entry.count + 1;
+    await kv.put(key, JSON.stringify({ 
+      count: newCount, 
+      resetTime: entry.resetTime 
+    }), { 
+      expirationTtl: Math.ceil((entry.resetTime - now) / 1000) 
+    });
+    
+    if (newCount > maxRequests) {
       return { allowed: false, resetTime: entry.resetTime, remaining: 0 };
     }
     
