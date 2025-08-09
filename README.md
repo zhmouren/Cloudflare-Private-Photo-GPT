@@ -49,6 +49,14 @@ graph TD
 | **安全**    | JWT + HMAC-SHA256 + CSP + Rate Limiting                                 |
 | **运维**    | Terraform + Wrangler + GitHub Actions                                   |
 
+### 开发工具
+
+| 工具 | 用途 |
+|------|------|
+| Wrangler | Cloudflare 开发工具 |
+| npm | 包管理 |
+| VS Code | 代码编辑器 |
+
 ## 🚀 快速部署
 
 ### 必需配置
@@ -94,7 +102,7 @@ wrangler deploy --env production
 3. 配置WAF防护规则
 4. 实施分级存储策略
 
-Flow Album 是一个基于 Cloudflare 技术栈构建的私人云相册应用，提供安全的照片和视频存储、管理和浏览功能。用户可以通过用户名密码保护访问自己的媒体文件，支持上传、下载、删除和批量操作。
+## Flow Album 是一个基于 Cloudflare 技术栈构建的私人云相册应用，提供安全的照片和视频存储、管理和浏览功能。用户可以通过用户名密码保护访问自己的媒体文件，支持上传、下载、删除和批量操作。
 
 ## 架构设计
 
@@ -112,49 +120,6 @@ Flow Album 采用前后端分离的架构设计，前端使用 React + TypeScrip
                     │    (Functions)     │
                     └────────────────────┘
 ```
-
-### 前端架构
-
-- **框架**: React 18 + TypeScript
-- **样式**: Tailwind CSS
-- **构建工具**: Vite
-- **状态管理**: React 内置状态管理
-- **响应式设计**: 移动端和桌面端适配
-
-### 后端架构
-
-- **运行环境**: Cloudflare Pages Functions
-- **存储服务**: Cloudflare R2
-- **API 网关**: Cloudflare Pages Functions Router
-- **图片处理**: Cloudflare Image Resizing
-
-## 技术栈
-
-### 前端技术栈
-
-| 技术 | 用途 |
-|------|------|
-| React 18 | UI 框架 |
-| TypeScript | 类型安全 |
-| Tailwind CSS | 样式框架 |
-| Vite | 构建工具 |
-| React Hooks | 状态和副作用管理 |
-
-### 后端技术栈
-
-| 技术 | 用途 |
-|------|------|
-| Cloudflare Pages Functions | 服务端运行环境 |
-| Cloudflare R2 | 对象存储 |
-| Cloudflare Image Resizing | 图片处理服务 |
-
-### 开发工具
-
-| 工具 | 用途 |
-|------|------|
-| Wrangler | Cloudflare 开发工具 |
-| npm | 包管理 |
-| VS Code | 代码编辑器 |
 
 ## 核心功能
 
@@ -281,9 +246,12 @@ Flow Album 支持两种主要部署方案：Cloudflare Pages 和 Cloudflare Work
      - 根目录: `/`
 
 3. **在 Cloudflare Pages 项目设置中配置以下环境变量：**
-   - ---必选步骤---：
+
+```bash
+   - ---必选步骤-核心环节变量---：
      - USERNAME: `登录用户名`
      - PASSWORD: `登录密码`
+     - JWT_SECRET=`32位以上随机字符串`
      - MAX_STORAGE_BYTES: `最大存储空间（字节），例如 6442450944 表示6GB`
      - MAX_FILE_SIZE_BYTES: `单个文件最大大小（字节），例如 52428800 表示50MB`
 
@@ -292,6 +260,10 @@ Flow Album 支持两种主要部署方案：Cloudflare Pages 和 Cloudflare Work
      - RATE_LIMIT_REQUESTS: `速率限制：时间窗口内的请求数，例如 10`
      - RATE_LIMIT_WINDOW_MS: `速率限制：时间窗口（毫秒），例如 60000（1分钟）`
      - UPLOAD_PREFIX: `上传文件前缀（可选）`
+   - ---性能调优---：
+     - EDGE_CACHE_TTL="86400"  # 24小时缓存
+     - IMAGE_OPTIM_QUALITY="85" # 图片优化质量
+```
 
 4. **在 Cloudflare Pages 项目绑定R2和kv空间（可选）：**
    - ---必选步骤---：
