@@ -46,16 +46,19 @@ export async function verifyJWT(token: string, secret: string): Promise<JWTPaylo
       diff |= signature.charCodeAt(i) ^ expectedSignature.charCodeAt(i);
     }
     if (diff !== 0) return null;
-  
-  try {
-    const payload: JWTPayload = JSON.parse(Buffer.from(encodedPayload, 'base64url').toString());
     
-    // 检查过期时间
-    if (payload.exp && payload.exp < Math.floor(Date.now() / 1000)) {
+    try {
+      const payload: JWTPayload = JSON.parse(Buffer.from(encodedPayload, 'base64url').toString());
+      
+      // 检查过期时间
+      if (payload.exp && payload.exp < Math.floor(Date.now() / 1000)) {
+        return null;
+      }
+      
+      return payload;
+    } catch {
       return null;
     }
-    
-    return payload;
   } catch {
     return null;
   }
