@@ -1,5 +1,6 @@
 name = "private-photo"
 compatibility_date = "2024-08-01"
+compatibility_flags = [ "nodejs_compat" ]  # 添加Node.js兼容支持
 
 # KV 命名空间绑定（用于速率限制）
 [[kv_namespaces]]
